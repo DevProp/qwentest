@@ -270,8 +270,8 @@ def create_smc_chart(
         hovermode='x unified'
     )
     
-    fig.update_yaxis(gridcolor='#2a2a2a')
-    fig.update_xaxis(gridcolor='#2a2a2a')
+    fig.update_yaxes(gridcolor='#2a2a2a')
+    fig.update_xaxes(gridcolor='#2a2a2a')
     
     return fig
 
