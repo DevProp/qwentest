@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+
+{% block title %}SMC Trader - Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 60px 0;
+        border-radius: 15px;
+        margin-bottom: 30px;
+    }
+    .feature-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: none;
+        border-radius: 15px;
+        height: 100%;
+    }
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    .feature-icon {
+        font-size: 3rem;
+        margin-bottom: 20px;
+        color: #667eea;
+    }
+    .stat-card {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 30px;
+        text-align: center;
+    }
+    .quick-analysis-form {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="hero-section text-center">
+            <h1 class="display-4 fw-bold mb-3">
+                <i class="bi bi-graph-up-arrow"></i> Smart Money Concepts Analyzer
+            </h1>
+            <p class="lead mb-4">
+                Professional institutional trading analysis for Binance cryptocurrencies.<br>
+                Detect Order Blocks, Fair Value Gaps, Triangle Patterns, and more.
+            </p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{{ url_for('screener') }}" class="btn btn-light btn-lg px-5">
+                    <i class="bi bi-search"></i> Find Opportunities
+                </a>
+                <button class="btn btn-outline-light btn-lg px-5" data-bs-toggle="modal" data-bs-target="#learnMoreModal">
+                    <i class="bi bi-info-circle"></i> Learn More
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="stat-card">
+            <h2 class="display-6 fw-bold">7+</h2>
+            <p class="mb-0">SMC Indicators</p>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <h2 class="display-6 fw-bold">Real-time</h2>
+            <p class="mb-0">Binance Data</p>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            <h2 class="display-6 fw-bold">AI-Powered</h2>
+            <p class="mb-0">Signal Detection</p>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-5">
+    <div class="col-12">
+        <h2 class="text-center mb-4">Quick Analysis</h2>
+        <div class="quick-analysis-form">
+            <form id="quickAnalysisForm" class="row g-3">
+                <div class="col-md-4">
+                    <label for="quickSymbol" class="form-label">Symbol</label>
+                    <input type="text" class="form-control form-control-lg" id="quickSymbol" placeholder="BTCUSDT" required>
+                </div>
+                <div class="col-md-3">
+                    <label for="quickTimeframe" class="form-label">Timeframe</label>
+                    <select class="form-select form-select-lg" id="quickTimeframe">
+                        <option value="15m">15 Minutes</option>
+                        <option value="1h" selected>1 Hour</option>
+                        <option value="4h">4 Hours</option>
+                        <option value="1d">1 Day</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                        <i class="bi bi-play-circle"></i> Analyze
+                    </button>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <a href="{{ url_for('screener') }}" class="btn btn-success btn-lg w-100">
+                        <i class="bi bi-lightning"></i> Auto Scan
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-5">
+    <div class="col-12">
+        <h2 class="text-center mb-4">Key Features</h2>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card feature-card p-4 text-center">
+            <div class="feature-icon">
+                <i class="bi bi-box"></i>
+            </div>
+            <h4>Order Blocks</h4>
+            <p class="text-muted">Identify institutional order accumulation zones where big players enter the market.</p>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card feature-card p-4 text-center">
+            <div class="feature-icon">
+                <i class="bi bi-gap"></i>
+            </div>
+            <h4>Fair Value Gaps</h4>
+            <p class="text-muted">Detect imbalance zones where price moved too quickly, creating potential reversal areas.</p>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card feature-card p-4 text-center">
+            <div class="feature-icon">
+                <i class="bi bi-diagram-3"></i>
+            </div>
+            <h4>Triangle Patterns</h4>
+            <p class="text-muted">Automatically detect ascending, descending, and symmetrical triangle patterns.</p>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card feature-card p-4 text-center">
+            <div class="feature-icon">
+                <i class="bi bi-arrows-expand"></i>
+            </div>
+            <h4>Break of Structure</h4>
+            <p class="text-muted">Track market structure breaks (BOS) and change of character (CHoCH) signals.</p>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card feature-card p-4 text-center">
+            <div class="feature-icon">
+                <i class="bi bi-droplet"></i>
+            </div>
+            <h4>Liquidity Pools</h4>
+            <p class="text-muted">Find areas where stop losses cluster, indicating potential liquidity sweeps.</p>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card feature-card p-4 text-center">
+            <div class="feature-icon">
+                <i class="bi bi-percent"></i>
+            </div>
+            <h4>Premium/Discount Zones</h4>
+            <p class="text-muted">Calculate Fibonacci-based zones to identify optimal entry points.</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <h5><i class="bi bi-info-circle"></i> About Smart Money Concepts</h5>
+            <p class="mb-0">
+                Smart Money Concepts (SMC) is a trading methodology that focuses on identifying institutional 
+                trading patterns and market structure. This tool combines multiple SMC indicators to generate 
+                high-probability trading signals with clear entry, stop-loss, and take-profit levels.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Learn More Modal -->
+<div class="modal fade" id="learnMoreModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">How to Use SMC Trader</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h6>1. Quick Analysis</h6>
+                <p>Enter any Binance symbol (e.g., BTCUSDT, ETHUSDT) and select your preferred timeframe to get instant SMC analysis.</p>
+                
+                <h6>2. Screener</h6>
+                <p>Use the automated screener to scan all top Binance pairs and find the best trading opportunities based on SMC confluences.</p>
+                
+                <h6>3. Understanding Signals</h6>
+                <ul>
+                    <li><strong>Confidence Score:</strong> Higher scores indicate stronger confluence of SMC factors</li>
+                    <li><strong>Risk/Reward:</strong> Target ratio of at least 1:2 or better</li>
+                    <li><strong>Confluences:</strong> Multiple SMC factors aligning (Order Blocks, FVGs, Patterns, etc.)</li>
+                </ul>
+                
+                <h6>4. Trading Strategy</h6>
+                <ul>
+                    <li>Wait for price to enter discount zone (for buys) or premium zone (for sells)</li>
+                    <li>Look for confluence with Order Blocks or Fair Value Gaps</li>
+                    <li>Confirm with market structure break (BOS)</li>
+                    <li>Set stop loss below/above the Order Block or recent swing</li>
+                    <li>Take profit at predefined levels (TP1, TP2, TP3)</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="{{ url_for('screener') }}" class="btn btn-primary">Start Screening</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('quickAnalysisForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const symbol = document.getElementById('quickSymbol').value.toUpperCase().trim();
+    const timeframe = document.getElementById('quickTimeframe').value;
+    
+    if (symbol) {
+        window.location.href = `/analyze/${symbol}?timeframe=${timeframe}`;
+    }
+});
+
+document.getElementById('symbolSearch').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        const symbol = this.value.toUpperCase().trim();
+        if (symbol) {
+            window.location.href = `/analyze/${symbol}`;
+        }
+    }
+});
+</script>
+{% endblock %}
