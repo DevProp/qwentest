@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+
+{% block title %}SMC Screener - Find Opportunities{% endblock %}
+
+{% block extra_css %}
+<style>
+    .opportunity-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border-left: 4px solid #667eea;
+    }
+    .opportunity-card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .strength-very-strong {
+        border-left-color: #28a745;
+        background: rgba(40, 167, 69, 0.05);
+    }
+    .strength-strong {
+        border-left-color: #20c997;
+    }
+    .strength-moderate {
+        border-left-color: #ffc107;
+    }
+    .strength-weak {
+        border-left-color: #dc3545;
+    }
+    .loading-spinner {
+        display: none;
+    }
+    .filter-section {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2><i class="bi bi-lightning"></i> SMC Opportunity Screener</h2>
+        <p class="text-muted">Scan all Binance USDT pairs for high-probability Smart Money Concepts setups</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="filter-section">
+            <form id="screenerForm" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label for="timeframe" class="form-label">Timeframe</label>
+                    <select class="form-select" id="timeframe">
+                        <option value="15m">15 Minutes</option>
+                        <option value="1h" selected>1 Hour</option>
+                        <option value="4h">4 Hours</option>
+                        <option value="1d">1 Day</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="minConfidence" class="form-label">Min Confidence</label>
+                    <select class="form-select" id="minConfidence">
+                        <option value="0.3">30% - All Signals</option>
+                        <option value="0.5" selected>50% - Moderate+</option>
+                        <option value="0.7">70% - Strong Only</option>
+                        <option value="0.8">80% - Very Strong</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="symbolLimit" class="form-label">Symbols to Scan</label>
+                    <select class="form-select" id="symbolLimit">
+                        <option value="20">Top 20</option>
+                        <option value="50" selected>Top 50</option>
+                        <option value="100">Top 100</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Run Screener
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4" id="loadingSection" style="display: none;">
+    <div class="col-12 text-center py-5">
+        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <h4 class="mt-3">Scanning markets...</h4>
+        <p class="text-muted">Analyzing Smart Money Concepts across multiple timeframes</p>
+        <div class="progress mt-3" style="max-width: 400px; margin: 20px auto;">
+            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                 id="scanProgress" role="progressbar" style="width: 0%"></div>
+        </div>
+        <p id="scanStatus" class="text-muted small"></p>
+    </div>
+</div>
+
+<div class="row mb-4" id="resultsHeader" style="display: none;">
+    <div class="col-md-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h3 id="totalOpportunities">0</h3>
+                <p class="mb-0">Opportunities Found</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h3 id="avgConfidence">0%</h3>
+                <p class="mb-0">Average Confidence</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h3 id="avgRiskReward">0</h3>
+                <p class="mb-0">Avg Risk/Reward</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row" id="opportunitiesList">
+    <!-- Opportunities will be loaded here -->
+</div>
+
+<div class="row" id="noResults" style="display: none;">
+    <div class="col-12 text-center py-5">
+        <i class="bi bi-inbox display-1 text-muted"></i>
+        <h4 class="mt-3">No Opportunities Found</h4>
+        <p class="text-muted">Try adjusting your filters or scanning more symbols</p>
+        <button class="btn btn-outline-primary mt-3" onclick="document.getElementById('screenerForm').requestSubmit()">
+            <i class="bi bi-arrow-clockwise"></i> Try Again
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let opportunitiesData = [];
+
+document.getElementById('screenerForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    runScreener();
+});
+
+async function runScreener() {
+    const timeframe = document.getElementById('timeframe').value;
+    const minConfidence = document.getElementById('minConfidence').value;
+    const limit = document.getElementById('symbolLimit').value;
+    
+    // Show loading
+    document.getElementById('loadingSection').style.display = 'block';
+    document.getElementById('resultsHeader').style.display = 'none';
+    document.getElementById('opportunitiesList').innerHTML = '';
+    document.getElementById('noResults').style.display = 'none';
+    
+    let progress = 0;
+    const progressBar = document.getElementById('scanProgress');
+    const scanStatus = document.getElementById('scanStatus');
+    
+    try {
+        const response = await fetch(`/api/screener?timeframe=${timeframe}&min_confidence=${minConfidence}&limit=${limit}`);
+        const data = await response.json();
+        
+        opportunitiesData = data.opportunities || [];
+        
+        // Update progress
+        progress = 100;
+        progressBar.style.width = progress + '%';
+        scanStatus.textContent = `Scanned ${data.symbols_analyzed} symbols`;
+        
+        // Hide loading after a brief delay
+        setTimeout(() => {
+            document.getElementById('loadingSection').style.display = 'none';
+            displayResults(data);
+        }, 500);
+        
+    } catch (error) {
+        console.error('Error running screener:', error);
+        document.getElementById('loadingSection').style.display = 'none';
+        alert('Error running screener. Please try again.');
+    }
+}
+
+function displayResults(data) {
+    const opportunities = data.opportunities || [];
+    
+    if (opportunities.length === 0) {
+        document.getElementById('noResults').style.display = 'block';
+        return;
+    }
+    
+    // Update stats
+    document.getElementById('resultsHeader').style.display = 'flex';
+    document.getElementById('totalOpportunities').textContent = opportunities.length;
+    
+    const avgConfidence = opportunities.reduce((sum, o) => sum + o.confidence, 0) / opportunities.length;
+    document.getElementById('avgConfidence').textContent = Math.round(avgConfidence * 100) + '%';
+    
+    const avgRR = opportunities.reduce((sum, o) => sum + o.risk_reward, 0) / opportunities.length;
+    document.getElementById('avgRiskReward').textContent = avgRR.toFixed(2);
+    
+    // Display opportunities
+    const container = document.getElementById('opportunitiesList');
+    container.innerHTML = '';
+    
+    opportunities.forEach((opp, index) => {
+        const card = createOpportunityCard(opp, index);
+        container.appendChild(card);
+    });
+}
+
+function createOpportunityCard(opp, index) {
+    const col = document.createElement('div');
+    col.className = 'col-lg-6 col-xl-4 mb-4';
+    
+    const strengthClass = `strength-${opp.signal_strength.toLowerCase().replace(' ', '-')}`;
+    
+    const card = document.createElement('div');
+    card.className = `card opportunity-card shadow-sm ${strengthClass}`;
+    card.onclick = () => window.location.href = `/analyze/${opp.symbol}`;
+    
+    const rrColor = opp.risk_reward >= 2 ? 'text-success' : (opp.risk_reward >= 1.5 ? 'text-warning' : 'text-danger');
+    
+    card.innerHTML = `
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <h5 class="card-title mb-1">${opp.symbol}</h5>
+                    <small class="text-muted">$${opp.price.toFixed(4)}</small>
+                </div>
+                <span class="badge bg-success">BUY</span>
+            </div>
+            
+            <div class="mb-3">
+                <div class="d-flex justify-content-between mb-1">
+                    <small>Confidence</small>
+                    <small class="fw-bold">${Math.round(opp.confidence * 100)}%</small>
+                </div>
+                <div class="progress" style="height: 6px;">
+                    <div class="progress-bar bg-success" role="progressbar" 
+                         style="width: ${opp.confidence * 100}%"></div>
+                </div>
+            </div>
+            
+            <div class="row g-2 mb-3">
+                <div class="col-6">
+                    <small class="text-muted d-block">Entry</small>
+                    <strong>$${opp.entry.toFixed(4)}</strong>
+                </div>
+                <div class="col-6">
+                    <small class="text-muted d-block">Stop Loss</small>
+                    <strong class="text-danger">$${opp.stop_loss.toFixed(4)}</strong>
+                </div>
+                <div class="col-12">
+                    <small class="text-muted d-block">Take Profit 1</small>
+                    <strong class="text-success">$${opp.take_profit_1.toFixed(4)}</strong>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <small class="text-muted">Risk/Reward</small>
+                <strong class="${rrColor}">1:${opp.risk_reward.toFixed(2)}</strong>
+            </div>
+            
+            <div class="mb-3">
+                <small class="text-muted d-block mb-1">Confluences: ${opp.confluences_count}</small>
+                <div class="d-flex flex-wrap gap-1">
+                    ${getConfluenceBadges(opp.confluences_count)}
+                </div>
+            </div>
+            
+            <p class="small text-muted mb-0" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                ${opp.reasoning}
+            </p>
+        </div>
+        <div class="card-footer bg-transparent">
+            <button class="btn btn-sm btn-outline-primary w-100">
+                <i class="bi bi-graph-up"></i> View Analysis
+            </button>
+        </div>
+    `;
+    
+    return col;
+}
+
+function getConfluenceBadges(count) {
+    const badges = [];
+    const colors = ['bg-primary', 'bg-success', 'bg-info', 'bg-warning', 'bg-danger'];
+    for (let i = 0; i < Math.min(count, 5); i++) {
+        badges.push(`<span class="badge ${colors[i % colors.length]}">•</span>`);
+    }
+    return badges.join('');
+}
+
+// Auto-run screener on page load
+window.addEventListener('load', function() {
+    runScreener();
+});
+</script>
+{% endblock %}

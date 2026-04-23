@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+
+{% block title %}{{ result.symbol }} - SMC Analysis{% endblock %}
+
+{% block extra_css %}
+<style>
+    .signal-card {
+        border-radius: 15px;
+        overflow: hidden;
+    }
+    .signal-buy {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        color: white;
+    }
+    .signal-sell {
+        background: linear-gradient(135deg, #cb2d3e 0%, #ef473a 100%);
+        color: white;
+    }
+    .confluence-badge {
+        display: inline-block;
+        padding: 5px 12px;
+        margin: 3px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+        border: 1px solid #667eea;
+    }
+    .metric-box {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+        height: 100%;
+    }
+    .metric-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #667eea;
+    }
+    .metric-label {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    .order-block-bullish {
+        border-left: 4px solid #28a745;
+        background: rgba(40, 167, 69, 0.05);
+    }
+    .order-block-bearish {
+        border-left: 4px solid #dc3545;
+        background: rgba(220, 53, 69, 0.05);
+    }
+    .fvg-bullish {
+        border-left: 4px solid #28a745;
+        background: rgba(40, 167, 69, 0.05);
+    }
+    .fvg-bearish {
+        border-left: 4px solid #dc3545;
+        background: rgba(220, 53, 69, 0.05);
+    }
+    .confidence-meter {
+        height: 10px;
+        border-radius: 5px;
+        background: #e9ecef;
+        overflow: hidden;
+    }
+    .confidence-fill {
+        height: 100%;
+        border-radius: 5px;
+        transition: width 0.5s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if result.error %}
+<div class="alert alert-danger">
+    <h4><i class="bi bi-exclamation-triangle"></i> Error</h4>
+    <p>{{ result.error }}</p>
+    <a href="{{ url_for('index') }}" class="btn btn-primary">Back to Home</a>
+</div>
+{% else %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('screener') }}">Screener</a></li>
+                <li class="breadcrumb-item active">{{ result.symbol }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="bi bi-graph-up"></i> {{ result.symbol }} 
+                    <small class="text-muted">({{ result.timeframe }})</small>
+                </h4>
+                <div>
+                    <span class="badge bg-secondary">${{ "%.4f"|format(result.current_price) }}</span>
+                    <span class="badge {% if result.price_change_24h >= 0 %}bg-success{% else %}bg-danger{% endif %}">
+                        {{ "%.2f"|format(result.price_change_24h) }}%
+                    </span>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div id="chartContainer"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        {% if result.signal %}
+        <div class="card signal-card shadow-sm mb-4 {% if result.signal.signal_type == 'BUY' %}signal-buy{% else %}signal-sell{% endif %}">
+            <div class="card-body text-center">
+                <h2 class="display-4 fw-bold mb-2">
+                    <i class="bi bi-{% if result.signal.signal_type == 'BUY' %}arrow-up-circle{% else %}arrow-down-circle{% endif %}"></i>
+                    {{ result.signal.signal_type }}
+                </h2>
+                <p class="lead mb-3">{{ result.signal.strength }} Signal</p>
+                
+                <div class="confidence-meter mb-3">
+                    <div class="confidence-fill" 
+                         style="width: {{ result.signal.confidence_score * 100 }}%; 
+                                background: linear-gradient(90deg, #667eea, #764ba2);"></div>
+                </div>
+                <p class="small">Confidence: {{ "%.1f"|format(result.signal.confidence_score * 100) }}%</p>
+                
+                <hr class="my-3" style="border-color: rgba(255,255,255,0.3);">
+                
+                <div class="text-start">
+                    <div class="mb-2">
+                        <small>Entry Price</small>
+                        <div class="fw-bold">${{ "%.4f"|format(result.signal.entry_price) }}</div>
+                    </div>
+                    <div class="mb-2">
+                        <small>Stop Loss</small>
+                        <div class="fw-bold text-danger">${{ "%.4f"|format(result.signal.stop_loss) }}</div>
+                    </div>
+                    <div class="mb-2">
+                        <small>Take Profit 1</small>
+                        <div class="fw-bold text-success">${{ "%.4f"|format(result.signal.take_profit_1) }}</div>
+                    </div>
+                    <div class="mb-2">
+                        <small>Take Profit 2</small>
+                        <div class="fw-bold text-success">${{ "%.4f"|format(result.signal.take_profit_2) }}</div>
+                    </div>
+                    <div class="mb-2">
+                        <small>Take Profit 3</small>
+                        <div class="fw-bold text-success">${{ "%.4f"|format(result.signal.take_profit_3) }}</div>
+                    </div>
+                    <div class="mb-2">
+                        <small>Risk/Reward</small>
+                        <div class="fw-bold">1:{{ "%.2f"|format(result.signal.risk_reward_ratio) }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-pause-circle display-4 text-muted mb-3"></i>
+                <h5>No Clear Signal</h5>
+                <p class="text-muted">Not enough confluence for a high-probability setup</p>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> Analysis Summary</h5>
+            </div>
+            <div class="card-body">
+                <p>{{ result.signal.reasoning if result.signal else 'Waiting for clearer market structure...' }}</p>
+                
+                {% if result.signal and result.signal.confluences %}
+                <h6 class="mt-3">Confluences Detected:</h6>
+                <div>
+                    {% for confluence in result.signal.confluences %}
+                    <span class="confluence-badge">{{ confluence }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="metric-box">
+            <div class="metric-value">${{ "%.4f"|format(result.premium_discount.equilibrium) }}</div>
+            <div class="metric-label">Equilibrium</div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="metric-box">
+            <div class="metric-value text-success">${{ "%.4f"|format(result.premium_discount.discount) }}</div>
+            <div class="metric-label">Discount Zone</div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="metric-box">
+            <div class="metric-value text-danger">${{ "%.4f"|format(result.premium_discount.premium) }}</div>
+            <div class="metric-label">Premium Zone</div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="metric-box">
+            <div class="metric-value">{{ result.order_blocks|length }}</div>
+            <div class="metric-label">Order Blocks</div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-box"></i> Order Blocks</h5>
+            </div>
+            <div class="card-body">
+                {% if result.order_blocks %}
+                <div class="list-group list-group-flush">
+                    {% for ob in result.order_blocks[:5] %}
+                    <div class="list-group-item {% if ob.direction == 'bullish' %}order-block-bullish{% else %}order-block-bearish{% endif %} mb-2 p-3 rounded">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ ob.direction|upper }} Order Block</strong>
+                                <div class="small text-muted">Strength: {{ "%.1f"|format(ob.strength * 100) }}%</div>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold">${{ "%.4f"|format(ob.price_start) }} - ${{ "%.4f"|format(ob.price_end) }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-4">No significant order blocks detected</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-gap"></i> Fair Value Gaps</h5>
+            </div>
+            <div class="card-body">
+                {% if result.fvgs %}
+                <div class="list-group list-group-flush">
+                    {% for fvg in result.fvgs[:5] %}
+                    <div class="list-group-item {% if fvg.direction == 'bullish' %}fvg-bullish{% else %}fvg-bearish{% endif %} mb-2 p-3 rounded">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ fvg.direction|upper }} FVG</strong>
+                                <div class="small text-muted">
+                                    Fill: {{ "%.1f"|format(fvg.fill_percentage * 100) }}%
+                                    {% if fvg.filled %}<span class="badge bg-success">Filled</span>{% endif %}
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold">${{ "%.4f"|format(fvg.low) }} - ${{ "%.4f"|format(fvg.high) }}</div>
+                                <small class="text-muted">Mid: ${{ "%.4f"|format(fvg.midpoint) }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-4">No significant fair value gaps detected</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if result.triangle %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-diagram-3"></i> Triangle Pattern Detected</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>Pattern Type:</strong>
+                        <div class="text-primary">{{ result.triangle.pattern_type|title }} Triangle</div>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Expected Breakout:</strong>
+                        <div class="{% if result.triangle.breakout_direction == 'bullish' %}text-success{% else %}text-danger{% endif %}">
+                            {{ result.triangle.breakout_direction|title }}
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Confidence:</strong>
+                        <div>{{ "%.1f"|format(result.triangle.confidence * 100) }}%</div>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Target Price:</strong>
+                        <div class="fw-bold">${{ "%.4f"|format(result.triangle.target_price) }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row">
+    <div class="col-12">
+        <div class="alert alert-warning">
+            <h6><i class="bi bi-exclamation-triangle"></i> Risk Disclaimer</h6>
+            <p class="mb-0 small">
+                This analysis is for educational purposes only and should not be considered as financial advice. 
+                Cryptocurrency trading involves substantial risk of loss. Always do your own research and never 
+                invest more than you can afford to lose. Past performance does not guarantee future results.
+            </p>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+{% if not result.error %}
+// Render the Plotly chart
+var graphJSON = {{ result.chart_json|safe }};
+Plotly.newPlot('chartContainer', graphJSON.data, graphJSON.layout, {responsive: true});
+
+// Auto-refresh every 60 seconds
+setTimeout(function() {
+    location.reload();
+}, 60000);
+{% endif %}
+</script>
+{% endblock %}
