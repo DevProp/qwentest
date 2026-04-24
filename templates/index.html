@@ -1,43 +1,80 @@
 {% extends "base.html" %}
 
-{% block title %}SMC Trader - Dashboard{% endblock %}
+{% block title %}SMC Trader Pro - Dashboard{% endblock %}
 
 {% block extra_css %}
 <style>
     .hero-section {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 60px 0;
-        border-radius: 15px;
+        background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(123, 44, 191, 0.1) 100%);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        padding: 80px 0;
+        border-radius: 20px;
         margin-bottom: 30px;
+        position: relative;
+        overflow: hidden;
+    }
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(0, 212, 255, 0.05) 0%, transparent 70%);
+        animation: pulse 4s ease-in-out infinite;
+    }
+    @keyframes heroPulse {
+        0%, 100% { transform: scale(1); opacity: 0.5; }
+        50% { transform: scale(1.1); opacity: 0.8; }
     }
     .feature-card {
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        border: none;
+        transition: all 0.3s ease;
+        border: 1px solid var(--border-color);
         border-radius: 15px;
         height: 100%;
+        background: var(--card-bg);
     }
     .feature-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        transform: translateY(-8px);
+        box-shadow: 0 10px 30px rgba(0, 212, 255, 0.15);
+        border-color: var(--primary-color);
     }
     .feature-icon {
         font-size: 3rem;
         margin-bottom: 20px;
-        color: #667eea;
+        background: var(--gradient-primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
     .stat-card {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        color: white;
+        background: linear-gradient(135deg, var(--card-bg) 0%, var(--panel-bg) 100%);
+        border: 1px solid var(--border-color);
         border-radius: 15px;
         padding: 30px;
         text-align: center;
+        transition: all 0.3s ease;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--primary-color);
+        box-shadow: var(--glow-primary);
+    }
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 800;
+        background: var(--gradient-primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
     .quick-analysis-form {
-        background: white;
+        background: var(--card-bg);
         border-radius: 15px;
         padding: 30px;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        border: 1px solid var(--border-color);
     }
 </style>
 {% endblock %}
@@ -68,35 +105,35 @@
 <div class="row mb-4">
     <div class="col-md-4 mb-3">
         <div class="stat-card">
-            <h2 class="display-6 fw-bold">7+</h2>
-            <p class="mb-0">SMC Indicators</p>
+            <h2 class="stat-value">7+</h2>
+            <p class="mb-0 text-muted">SMC Indicators</p>
         </div>
     </div>
     <div class="col-md-4 mb-3">
-        <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-            <h2 class="display-6 fw-bold">Real-time</h2>
-            <p class="mb-0">Binance Data</p>
+        <div class="stat-card">
+            <h2 class="stat-value">Real-time</h2>
+            <p class="mb-0 text-muted">Binance Data</p>
         </div>
     </div>
     <div class="col-md-4 mb-3">
-        <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-            <h2 class="display-6 fw-bold">AI-Powered</h2>
-            <p class="mb-0">Signal Detection</p>
+        <div class="stat-card">
+            <h2 class="stat-value">AI-Powered</h2>
+            <p class="mb-0 text-muted">Signal Detection</p>
         </div>
     </div>
 </div>
 
 <div class="row mb-5">
     <div class="col-12">
-        <h2 class="text-center mb-4">Quick Analysis</h2>
+        <h2 class="text-center mb-4" style="color: var(--text-primary);">Quick Analysis</h2>
         <div class="quick-analysis-form">
             <form id="quickAnalysisForm" class="row g-3">
                 <div class="col-md-4">
-                    <label for="quickSymbol" class="form-label">Symbol</label>
+                    <label for="quickSymbol" class="form-label" style="color: var(--text-primary);">Symbol</label>
                     <input type="text" class="form-control form-control-lg" id="quickSymbol" placeholder="BTCUSDT" required>
                 </div>
                 <div class="col-md-3">
-                    <label for="quickTimeframe" class="form-label">Timeframe</label>
+                    <label for="quickTimeframe" class="form-label" style="color: var(--text-primary);">Timeframe</label>
                     <select class="form-select form-select-lg" id="quickTimeframe">
                         <option value="15m">15 Minutes</option>
                         <option value="1h" selected>1 Hour</option>
@@ -121,7 +158,7 @@
 
 <div class="row mb-5">
     <div class="col-12">
-        <h2 class="text-center mb-4">Key Features</h2>
+        <h2 class="text-center mb-4" style="color: var(--text-primary);">Key Features</h2>
     </div>
     
     <div class="col-md-4 mb-4">
@@ -129,7 +166,7 @@
             <div class="feature-icon">
                 <i class="bi bi-box"></i>
             </div>
-            <h4>Order Blocks</h4>
+            <h4 style="color: var(--text-primary);">Order Blocks</h4>
             <p class="text-muted">Identify institutional order accumulation zones where big players enter the market.</p>
         </div>
     </div>
@@ -139,7 +176,7 @@
             <div class="feature-icon">
                 <i class="bi bi-gap"></i>
             </div>
-            <h4>Fair Value Gaps</h4>
+            <h4 style="color: var(--text-primary);">Fair Value Gaps</h4>
             <p class="text-muted">Detect imbalance zones where price moved too quickly, creating potential reversal areas.</p>
         </div>
     </div>
@@ -149,7 +186,7 @@
             <div class="feature-icon">
                 <i class="bi bi-diagram-3"></i>
             </div>
-            <h4>Triangle Patterns</h4>
+            <h4 style="color: var(--text-primary);">Triangle Patterns</h4>
             <p class="text-muted">Automatically detect ascending, descending, and symmetrical triangle patterns.</p>
         </div>
     </div>
@@ -159,7 +196,7 @@
             <div class="feature-icon">
                 <i class="bi bi-arrows-expand"></i>
             </div>
-            <h4>Break of Structure</h4>
+            <h4 style="color: var(--text-primary);">Break of Structure</h4>
             <p class="text-muted">Track market structure breaks (BOS) and change of character (CHoCH) signals.</p>
         </div>
     </div>
@@ -169,7 +206,7 @@
             <div class="feature-icon">
                 <i class="bi bi-droplet"></i>
             </div>
-            <h4>Liquidity Pools</h4>
+            <h4 style="color: var(--text-primary);">Liquidity Pools</h4>
             <p class="text-muted">Find areas where stop losses cluster, indicating potential liquidity sweeps.</p>
         </div>
     </div>
@@ -179,7 +216,7 @@
             <div class="feature-icon">
                 <i class="bi bi-percent"></i>
             </div>
-            <h4>Premium/Discount Zones</h4>
+            <h4 style="color: var(--text-primary);">Premium/Discount Zones</h4>
             <p class="text-muted">Calculate Fibonacci-based zones to identify optimal entry points.</p>
         </div>
     </div>
@@ -187,8 +224,8 @@
 
 <div class="row">
     <div class="col-12">
-        <div class="alert alert-info">
-            <h5><i class="bi bi-info-circle"></i> About Smart Money Concepts</h5>
+        <div class="alert" style="background: rgba(0, 212, 255, 0.1); border: 1px solid var(--primary-color); color: var(--text-primary);">
+            <h5 style="color: var(--primary-color);"><i class="bi bi-info-circle"></i> About Smart Money Concepts</h5>
             <p class="mb-0">
                 Smart Money Concepts (SMC) is a trading methodology that focuses on identifying institutional 
                 trading patterns and market structure. This tool combines multiple SMC indicators to generate 

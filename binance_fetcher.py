@@ -1,17 +1,20 @@
 """
 Binance Data Fetcher Module
 Handles fetching OHLCV data from Binance for all trading pairs
+Optimized for speed with parallel processing and intelligent caching
 """
 
 import ccxt
 import pandas as pd
 from typing import List, Dict, Optional
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
 
 
 class BinanceDataFetcher:
     """
-    Professional Binance data fetcher with rate limiting and error handling
+    Professional Binance data fetcher with rate limiting, error handling, and parallel processing
     """
 
     def __init__(self):
@@ -23,7 +26,17 @@ class BinanceDataFetcher:
         })
         self.markets = None
         self.last_fetch_time = 0
-        self.rate_limit_delay = 0.1  # 100ms between requests
+        self.rate_limit_delay = 0.05  # 50ms between requests for faster scanning
+        self._lock = threading.Lock()
+        self._ticker_cache = {}
+        self._cache_timestamp = 0
+        self._cache_ttl = 60  # Cache tickers for 60 seconds
+        
+        # Pre-load markets on initialization
+        try:
+            self.load_markets()
+        except Exception:
+            pass
 
     def load_markets(self) -> Dict:
         """Load all available markets from Binance"""
@@ -64,7 +77,7 @@ class BinanceDataFetcher:
 
     def get_top_symbols_by_volume(self, quote_currency: str = 'USDT', top_n: int = 50) -> List[str]:
         """
-        Get top N symbols by 24h trading volume
+        Get top N symbols by 24h trading volume using cached data for speed
         
         Args:
             quote_currency: Quote currency
@@ -76,25 +89,66 @@ class BinanceDataFetcher:
         if not self.markets:
             self.load_markets()
 
+        # Check cache first
+        current_time = time.time()
+        cache_key = f"{quote_currency}_volume"
+        
+        with self._lock:
+            if (cache_key in self._ticker_cache and 
+                current_time - self._cache_timestamp < self._cache_ttl):
+                cached_data = self._ticker_cache[cache_key]
+                cached_data.sort(key=lambda x: x[1], reverse=True)
+                return [s[0] for s in cached_data[:top_n]]
+        
         symbol_volumes = []
-        for symbol, market in self.markets.items():
+        
+        # Use ThreadPoolExecutor for parallel fetching
+        def fetch_ticker(symbol):
+            try:
+                ticker = self.exchange.fetch_ticker(symbol)
+                volume = ticker.get('quoteVolume', 0)
+                return (symbol, volume) if volume > 0 else None
+            except Exception:
+                return None
+        
+        # Filter valid symbols first
+        valid_symbols = [
+            symbol for symbol, market in self.markets.items()
             if (market.get('quote') == quote_currency and 
                 market.get('active', False) and
-                not market.get('future', False)):
-                
-                try:
-                    self._respect_rate_limit()
-                    ticker = self.exchange.fetch_ticker(symbol)
-                    volume = ticker.get('quoteVolume', 0)
-                    if volume > 0:
-                        symbol_volumes.append((symbol, volume))
-                except Exception:
-                    continue
-
-        # Sort by volume descending
-        symbol_volumes.sort(key=lambda x: x[1], reverse=True)
+                not market.get('future', False))
+        ]
         
-        return [s[0] for s in symbol_volumes[:top_n]]
+        # Fetch tickers in parallel batches
+        batch_size = 20
+        all_results = []
+        
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            for i in range(0, len(valid_symbols), batch_size):
+                batch = valid_symbols[i:i+batch_size]
+                futures = {executor.submit(fetch_ticker, sym): sym for sym in batch}
+                
+                for future in as_completed(futures):
+                    try:
+                        result = future.result()
+                        if result:
+                            all_results.append(result)
+                    except Exception:
+                        continue
+                
+                # Small delay between batches to respect rate limits
+                if i + batch_size < len(valid_symbols):
+                    time.sleep(0.1)
+        
+        # Cache results
+        with self._lock:
+            self._ticker_cache[cache_key] = all_results
+            self._cache_timestamp = current_time
+        
+        # Sort by volume descending
+        all_results.sort(key=lambda x: x[1], reverse=True)
+        
+        return [s[0] for s in all_results[:top_n]]
 
     def _respect_rate_limit(self):
         """Ensure we respect API rate limits"""
