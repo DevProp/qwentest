@@ -1,47 +1,83 @@
-/* SMC Trader - Custom Styles */
+/* SMC Trader Pro - Professional Trading Theme */
 
 :root {
-    --primary-color: #667eea;
-    --secondary-color: #764ba2;
-    --success-color: #10b981;
-    --danger-color: #ef4444;
-    --dark-bg: #1a1a2e;
+    --primary-color: #00d4ff;
+    --secondary-color: #7b2cbf;
+    --success-color: #00ff88;
+    --danger-color: #ff3d71;
+    --warning-color: #ffc107;
+    --info-color: #00d4ff;
+    --dark-bg: #0a0e1a;
+    --card-bg: #131722;
+    --panel-bg: #1e222d;
+    --border-color: #2a2e39;
+    --text-primary: #e0e0e0;
+    --text-secondary: #888888;
+    --bullish-green: #00ff88;
+    --bearish-red: #ff3d71;
+    --gradient-primary: linear-gradient(135deg, #00d4ff 0%, #7b2cbf 100%);
+    --gradient-success: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+    --gradient-danger: linear-gradient(135deg, #ff3d71 0%, #ff1f5a 100%);
+    --glow-primary: 0 0 20px rgba(0, 212, 255, 0.3);
+    --glow-success: 0 0 20px rgba(0, 255, 136, 0.3);
 }
 
 body {
-    background-color: #f5f7fa;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, var(--dark-bg) 0%, #1a1e2e 100%);
+    font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+    color: var(--text-primary);
+    min-height: 100vh;
 }
 
 .navbar {
-    background: linear-gradient(135deg, var(--dark-bg) 0%, #2d2d44 100%) !important;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    background: linear-gradient(135deg, #0a0e1a 0%, #1a1e2e 100%) !important;
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
 }
 
 .navbar-brand {
-    font-weight: 700;
-    font-size: 1.5rem;
+    font-weight: 800;
+    font-size: 1.6rem;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: var(--glow-primary);
 }
 
 .card {
-    border: none;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 6px 25px rgba(0, 212, 255, 0.15);
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    background: var(--gradient-primary);
     border: none;
+    font-weight: 600;
+    padding: 10px 24px;
+    transition: all 0.3s ease;
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    background: linear-gradient(135deg, #00c4ef 0%, #6a1fa0 100%);
+    transform: translateY(-2px);
+    box-shadow: var(--glow-primary);
 }
 
 .btn-success {
-    background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);
+    background: var(--gradient-success);
     border: none;
+    font-weight: 600;
+    color: #000;
 }
 
 .btn-outline-success {
@@ -51,26 +87,151 @@ body {
 
 .btn-outline-success:hover {
     background: var(--success-color);
-    color: white;
+    color: #000;
+    box-shadow: var(--glow-success);
+}
+
+.form-control, .form-select {
+    background: var(--panel-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 8px;
+}
+
+.form-control:focus, .form-select:focus {
+    background: var(--panel-bg);
+    border-color: var(--primary-color);
+    color: var(--text-primary);
+    box-shadow: 0 0 0 0.2rem rgba(0, 212, 255, 0.25);
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: var(--dark-bg);
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--primary-color);
-    border-radius: 4px;
+    background: var(--gradient-primary);
+    border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--secondary-color);
+    background: linear-gradient(135deg, #00c4ef 0%, #6a1fa0 100%);
+}
+
+/* Signal strength indicators with glow */
+.signal-strength-bar {
+    height: 10px;
+    border-radius: 5px;
+    background: var(--panel-bg);
+    overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.signal-strength-fill {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 0.6s ease;
+}
+
+.strength-very-strong .signal-strength-fill {
+    background: var(--gradient-success);
+    box-shadow: var(--glow-success);
+}
+
+.strength-strong .signal-strength-fill {
+    background: linear-gradient(135deg, #20c997 0%, #17a57a 100%);
+}
+
+.strength-moderate .signal-strength-fill {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+}
+
+.strength-weak .signal-strength-fill {
+    background: var(--gradient-danger);
+}
+
+/* Chart container optimizations */
+#chartContainer {
+    min-height: 600px;
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+}
+
+/* Badge styles */
+.badge {
+    padding: 6px 12px;
+    font-weight: 600;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.badge.bg-success {
+    background: var(--gradient-success) !important;
+    color: #000;
+}
+
+.badge.bg-primary {
+    background: var(--gradient-primary) !important;
+}
+
+.badge.bg-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%) !important;
+    color: #000;
+}
+
+.badge.bg-danger {
+    background: var(--gradient-danger) !important;
+}
+
+/* Opportunity cards */
+.opportunity-card {
+    border-left: 4px solid var(--primary-color);
+    transition: all 0.3s ease;
+}
+
+.opportunity-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(0, 212, 255, 0.2);
+}
+
+/* Progress bars */
+.progress {
+    background: var(--panel-bg);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    background: var(--gradient-primary);
+}
+
+.progress-bar.bg-success {
+    background: var(--gradient-success) !important;
+}
+
+/* Text colors */
+.text-success {
+    color: var(--success-color) !important;
+}
+
+.text-danger {
+    color: var(--danger-color) !important;
+}
+
+.text-primary {
+    color: var(--primary-color) !important;
+}
+
+.text-muted {
+    color: var(--text-secondary) !important;
 }
 
 /* Animation for loading states */
@@ -83,27 +244,23 @@ body {
     }
 }
 
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
 .loading-pulse {
     animation: pulse 1.5s ease-in-out infinite;
 }
 
-/* Signal strength indicators */
-.signal-strength-bar {
-    height: 8px;
-    border-radius: 4px;
-    background: #e9ecef;
-    overflow: hidden;
-}
-
-.signal-strength-fill {
-    height: 100%;
-    border-radius: 4px;
-    transition: width 0.6s ease;
-}
-
-/* Chart container optimizations */
-#chartContainer {
-    min-height: 600px;
+.loading-shimmer {
+    background: linear-gradient(90deg, var(--panel-bg) 0%, var(--border-color) 50%, var(--panel-bg) 100%);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
 }
 
 /* Responsive adjustments */
@@ -122,23 +279,86 @@ body {
 }
 
 /* Table styles for screener */
+.table {
+    color: var(--text-primary);
+}
+
 .table-hover tbody tr:hover {
-    background-color: rgba(102, 126, 234, 0.05);
+    background-color: rgba(0, 212, 255, 0.1);
     cursor: pointer;
 }
 
-/* Badge animations */
-.badge {
-    transition: all 0.2s ease;
-}
-
-.badge:hover {
-    transform: scale(1.05);
+.table-dark {
+    --bs-table-bg: var(--card-bg);
+    --bs-table-border-color: var(--border-color);
 }
 
 /* Footer styles */
 footer {
     margin-top: auto;
+    background: linear-gradient(135deg, #0a0e1a 0%, #1a1e2e 100%) !important;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Glow effects for important elements */
+.glow-success {
+    box-shadow: var(--glow-success);
+}
+
+.glow-primary {
+    box-shadow: var(--glow-primary);
+}
+
+/* Stat cards */
+.stat-card {
+    background: linear-gradient(135deg, var(--card-bg) 0%, var(--panel-bg) 100%);
+    border: 1px solid var(--border-color);
+    border-radius: 15px;
+    padding: 25px;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--primary-color);
+    box-shadow: var(--glow-primary);
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Confluence badges */
+.confluence-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    margin: 2px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: rgba(0, 212, 255, 0.15);
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+}
+
+/* Price display */
+.price-display {
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.price-up {
+    color: var(--success-color);
+}
+
+.price-down {
+    color: var(--danger-color);
 }
 
 /* Print styles */
