@@ -316,21 +316,25 @@ def api_analyze(symbol: str):
 @app.route('/api/screener')
 def api_screener():
     """
-    API endpoint for screening all symbols
+    API endpoint for screening all symbols - FAST PARALLEL VERSION
     Returns symbols with strong buy signals
     """
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    
     timeframe = request.args.get('timeframe', '1h')
     limit = int(request.args.get('limit', 50))
     min_confidence = float(request.args.get('min_confidence', 0.5))
     
-    # Get top symbols by volume
+    # Get top symbols by volume (cached)
     symbols = data_fetcher.get_top_symbols_by_volume(quote_currency='USDT', top_n=limit)
     
     opportunities = []
+    opportunities_lock = threading.Lock()
     
-    for symbol in symbols:
+    def analyze_single_symbol(symbol):
+        """Analyze a single symbol for trading opportunities"""
         try:
-            result = analyze_symbol(symbol, timeframe)
+            result = analyze_symbol_fast(symbol, timeframe)
             
             if 'error' not in result and result.get('signal'):
                 signal = result['signal']
@@ -339,20 +343,36 @@ def api_screener():
                 if (signal['signal_type'] == 'BUY' and 
                     signal['confidence_score'] >= min_confidence):
                     
-                    opportunities.append({
+                    opp = {
                         'symbol': symbol,
                         'price': result['current_price'],
                         'signal_strength': signal['strength'],
                         'confidence': signal['confidence_score'],
                         'risk_reward': signal['risk_reward_ratio'],
-                        'confluences_count': len(signal['confluences']),
+                        'confluences_count': len(signal.get('confluences', [])),
+                        'confluences': signal.get('confluences', []),
                         'entry': signal['entry_price'],
                         'stop_loss': signal['stop_loss'],
                         'take_profit_1': signal['take_profit_1'],
                         'reasoning': signal['reasoning']
-                    })
-        except Exception as e:
-            continue
+                    }
+                    
+                    with opportunities_lock:
+                        opportunities.append(opp)
+        except Exception:
+            pass
+        
+        return None
+    
+    # Use ThreadPoolExecutor for parallel analysis
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        futures = {executor.submit(analyze_single_symbol, sym): sym for sym in symbols}
+        
+        completed = 0
+        total = len(symbols)
+        
+        for future in as_completed(futures):
+            completed += 1
     
     # Sort by confidence and risk-reward
     opportunities.sort(key=lambda x: (x['confidence'], x['risk_reward']), reverse=True)
@@ -364,6 +384,35 @@ def api_screener():
         'opportunities_found': len(opportunities),
         'opportunities': opportunities[:20]  # Return top 20
     })
+
+
+def analyze_symbol_fast(symbol: str, timeframe: str = '1h') -> Dict:
+    """
+    Fast version of analyze_symbol optimized for screener
+    Uses reduced lookback and simplified calculations
+    """
+    # Fetch data with reduced limit for speed
+    df = data_fetcher.fetch_ohlcv(symbol, timeframe=timeframe, limit=100)
+    
+    if df.empty:
+        return {'error': f'No data available for {symbol}'}
+    
+    # Run SMC analysis with reduced lookback
+    smc_fast = SmartMoneyConcepts(lookback_period=50)
+    signal = smc_fast.generate_trading_signal(symbol, df, timeframe)
+    
+    if not signal:
+        return {'symbol': symbol, 'signal': None}
+    
+    # Prepare minimal result for screener
+    result = {
+        'symbol': symbol,
+        'timeframe': timeframe,
+        'current_price': float(df['close'].iloc[-1]),
+        'signal': signal_to_dict(signal)
+    }
+    
+    return result
 
 
 @app.route('/screener')
