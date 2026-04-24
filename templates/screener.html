@@ -225,11 +225,15 @@ function createOpportunityCard(opp, index) {
     const col = document.createElement('div');
     col.className = 'col-lg-6 col-xl-4 mb-4';
     
-    const strengthClass = `strength-${opp.signal_strength.toLowerCase().replace(' ', '-')}`;
+    const strengthClass = `strength-${(opp.signal_strength || 'Moderate').toLowerCase().replace(' ', '-')}`;
     
     const card = document.createElement('div');
     card.className = `card opportunity-card shadow-sm ${strengthClass}`;
-    card.onclick = () => window.location.href = `/analyze/${opp.symbol}`;
+    card.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        window.location.href = `/analyze/${opp.symbol}?timeframe=${encodeURIComponent(document.getElementById('timeframe').value)}`;
+    };
     
     const rrColor = opp.risk_reward >= 2 ? 'text-success' : (opp.risk_reward >= 1.5 ? 'text-warning' : 'text-danger');
     
@@ -275,10 +279,15 @@ function createOpportunityCard(opp, index) {
             </div>
             
             <div class="mb-3">
-                <small class="text-muted d-block mb-1">Confluences: ${opp.confluences_count}</small>
+                <small class="text-muted d-block mb-1">Confluences: ${opp.confluences_count || 0}</small>
                 <div class="d-flex flex-wrap gap-1">
-                    ${getConfluenceBadges(opp.confluences_count)}
+                    ${getConfluenceBadges(opp.confluences_count || 0)}
                 </div>
+                ${opp.confluences && opp.confluences.length > 0 ? `
+                    <div class="mt-2">
+                        ${opp.confluences.map(c => `<span class="badge bg-primary me-1">${c}</span>`).join('')}
+                    </div>
+                ` : ''}
             </div>
             
             <p class="small text-muted mb-0" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
